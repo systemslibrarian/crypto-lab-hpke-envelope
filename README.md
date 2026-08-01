@@ -43,7 +43,7 @@ Seal real messages under any mode and AEAD, expand every stage's intermediates, 
 
 ## Real-World Usage
 
-TLS Encrypted Client Hello (draft-ietf-tls-esni), Oblivious HTTP (RFC 9458) and Oblivious DoH, MLS (RFC 9420) welcome messages, Apple iCloud Private Relay / key recovery, and Go 1.24+'s `crypto/hpke`. Post-quantum: draft-ietf-hpke-pq registers ML-KEM and hybrid X25519+ML-KEM-768 KEM code points.
+TLS Encrypted Client Hello (draft-ietf-tls-esni), Oblivious HTTP (RFC 9458) and Oblivious DoH, MLS (RFC 9420) welcome messages, Apple iCloud Private Relay / key recovery, and Go 1.26's `crypto/hpke`. Post-quantum: draft-ietf-hpke-pq registers ML-KEM and hybrid X25519+ML-KEM-768 KEM code points.
 
 ## How to Run Locally
 
