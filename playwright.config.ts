@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4173;
+const PORT = 4649;
 const BASE = '/crypto-lab-hpke-envelope/';
 
 export default defineConfig({
