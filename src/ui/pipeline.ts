@@ -7,7 +7,7 @@
  * Every stage is a real computation whose real intermediates expand in-page,
  * and every stage links out to the lab that teaches that primitive alone.
  */
-import { bytesToHex, concatBytes } from '../hpke/bytes';
+import { bytesToHex, concatBytes, utf8 } from '../hpke/bytes';
 import {
   AEAD_AES_128_GCM,
   AEAD_CHACHA20_POLY1305,
@@ -217,7 +217,12 @@ export function renderPipeline(store: LabStore): HTMLElement {
         if (step) await new Promise((r) => setTimeout(r, step));
       }
       const entry = await store.seal();
-      sealStatus.textContent = `Sealed message #${entry.seq} — ct is ${entry.ct.length} bytes (plaintext ${entry.plaintext.length} + 16-byte tag; the length is not hidden). Nonce used: ${bytesToHex(entry.nonce)}.`;
+      // The AEAD sealed the UTF-8 encoding, so the arithmetic printed here has
+      // to count UTF-8 bytes. `entry.plaintext.length` counts UTF-16 code
+      // units, which made the sum wrong for any non-ASCII message ("café ☕"
+      // printed "ct is 25 bytes (plaintext 6 + 16-byte tag)").
+      const ptBytes = utf8(entry.plaintext).length;
+      sealStatus.textContent = `Sealed message #${entry.seq} — ct is ${entry.ct.length} bytes (plaintext ${ptBytes} + 16-byte tag; the length is not hidden). Nonce used: ${bytesToHex(entry.nonce)}.`;
       setTimeout(() => stages.forEach((id) => document.getElementById(id)?.classList.remove('stage-active')), step ? 900 : 0);
       sealBtn.disabled = false;
     })();

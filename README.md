@@ -52,7 +52,7 @@ npm install
 npm run dev        # Vite dev server
 npm test           # 227 Vitest tests incl. RFC 9180 Appendix A KATs
 npm run build      # typecheck + production build
-npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, dark + light themes
+npm run test:a11y  # Playwright: functional claims spec + axe-core WCAG 2.1 A/AA gate
 ```
 
 ## Related Demos
@@ -71,7 +71,8 @@ npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, dark + light themes
 
 - **227 Vitest tests, all passing**, of which 173 are known-answer tests from the official RFC 9180 Appendix A vectors (`src/hpke/vectors/rfc9180.json`, trimmed from the CFRG `test-vectors.json`): A.1 and A.2 suites × all four modes — DeriveKeyPair, Encap/Decap, every KeySchedule intermediate, Seal/Open at `seq ∈ {0, 1, 2, 255, 256}`, and secret export.
 - The remaining tests cover fresh-key round-trips (all modes × both AEADs), the context-binding matrix (info/AAD/mode/PSK/pkS mismatches all rejected by the real AEAD; identical two-sided changes accepted; replay to a fresh context accepted — as the spec says), and fail-closed edge cases (PSK input validation, §9.5 short-PSK guard, all-zero DH rejection, malformed lengths, nonce arithmetic).
-- **Accessibility is gated in CI**: `npm run test:a11y` scans the production build with axe-core for WCAG 2.1 A/AA in both themes — after driving the live demo so the dynamic result regions (including the alarm state) are scanned — and the Pages deploy runs only if it passes.
+- **22 Playwright tests drive the built page in a real browser** (`e2e/claims.spec.ts`) and assert what it claims: the seal status' length arithmetic sums (ciphertext = UTF-8 plaintext bytes + 16-byte tag, checked on a multi-byte message too), every nonce table row equals `base_nonce XOR I2OSP(seq, 12)` recomputed in the test, `key_schedule_context` equals its own three rendered segments concatenated, the Base→Auth diff moves exactly one byte and Base→PSK exactly 33, all four modes × both AEADs seal for real, and every tamper path — receiver `info`, sender AAD, a one-sided mode switch, a hand-typed edit, and the replay — reaches its failure state *and* states why. The verdict is cross-checked against the panel's own computed comparison rows, so a verdict that disagrees with the bytes fails the suite.
+- **Accessibility is gated in CI**: the same `npm run test:a11y` run scans the production build with axe-core for WCAG 2.1 A/AA in both themes — after driving the live demo so the dynamic result regions (including the alarm state) are scanned — and the Pages deploy runs only if the whole browser gate passes.
 
 ---
 

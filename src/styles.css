@@ -115,6 +115,11 @@ body {
   align-items: end;
   margin: 0.7rem 0;
 }
+/* An author `display` declaration outranks the UA stylesheet's
+   `[hidden]{display:none}`, so `pskCtl.hidden = true` left the PSK panel fully
+   visible (and focusable) in Base and Auth modes, where the PSK is not used.
+   Restore the attribute's meaning for these rows. */
+.controls[hidden], .psk-controls[hidden], .key-controls[hidden] { display: none; }
 .ctl { display: inline-flex; flex-direction: column; gap: 0.25rem; margin: 0; }
 .ctl label, .ctl-label, .hexrow-label {
   font-size: 0.78rem;
