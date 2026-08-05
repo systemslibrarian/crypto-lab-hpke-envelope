@@ -76,6 +76,6 @@ npm run test:a11y  # Playwright: functional claims spec + axe-core WCAG 2.1 A/AA
 
 ---
 
-*One of 170+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
+*Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
