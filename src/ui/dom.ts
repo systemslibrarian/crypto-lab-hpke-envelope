@@ -30,12 +30,24 @@ export function shortHex(bytes: Uint8Array, n = 8): string {
   return bytes.length <= n ? hex : `${hex.slice(0, n * 2)}…`;
 }
 
-/** A full-width wrapping hex value with an accessible name. */
+/**
+ * A full-width wrapping hex value, labelled by the text beside it.
+ *
+ * The `<code>` used to carry `aria-label="<label>: <n> bytes"`. That attribute
+ * is PROHIBITED on a role-less element — `<code>` has no implicit role — so the
+ * name was silently discarded by every assistive technology, and axe files the
+ * problem under `incomplete` rather than `violations`, which is why a
+ * violations-only gate never saw it across 124 scans.
+ *
+ * Nothing is lost by removing it: the label and the byte count are already on
+ * screen as text, immediately before and after the value, in that order. The
+ * attribute was restating adjacent visible content.
+ */
 export function hexValue(label: string, bytes: Uint8Array): HTMLElement {
   const wrap = el('div', { class: 'hexrow' });
   wrap.append(
     el('span', { class: 'hexrow-label', text: label }),
-    el('code', { class: 'hexblock', 'aria-label': `${label}: ${bytes.length} bytes`, text: bytesToHex(bytes) || '(empty)' }),
+    el('code', { class: 'hexblock', text: bytesToHex(bytes) || '(empty)' }),
     el('span', { class: 'hexrow-len', text: `${bytes.length} B` }),
   );
   return wrap;

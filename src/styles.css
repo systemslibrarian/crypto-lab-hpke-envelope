@@ -8,8 +8,17 @@
   --surface: #111a2f;
   --surface-2: #18233c;
   --border: #2c3a5c;
-  /* Text-entry control boundaries need >= 3:1 vs both the field fill and the
-     surrounding surface (WCAG 1.4.11); panel/decorative borders stay subtle. */
+  /* COMPONENT boundaries — every interactive control, not just the text-entry
+     ones. This comment used to say "text-entry control boundaries", and the
+     sheet matched it: `--ctl-border` appeared on `input[type='text']` and
+     `select` and nowhere else, while `.btn` and `.chip` took `--border`, which
+     is the surface-divider value. The old `e2e/a11y.spec.ts` then measured
+     1.4.11 on `input, textarea, select` — exactly the set already using this
+     token — and passed. Measured from real screenshot pixels against the panel
+     each control sits on: buttons 1.54:1 dark / 1.60:1 light with a
+     `--surface-2` fill at 1.11:1, so the border was the only thing delimiting
+     them and it was invisible. Now 4.09:1 and 4.31:1, the same as the selects.
+     Panel and decorative borders keep `--border`; they are not components. */
   --ctl-border: #6a7ba1;
   --text: #e9eef8;
   --text-dim: #aab6cd;
@@ -54,6 +63,24 @@ body {
   color: var(--text);
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.55;
+}
+
+/* `border-box`, and this is a WCAG 1.4.10 fix rather than a style preference.
+   This sheet had no `box-sizing` rule at all — only a one-off on
+   `.side-card input, .side-card select`, patched where someone had already hit
+   the problem locally. Under the default `content-box`, `width: 100%` plus
+   padding plus a border is WIDER than the container, and the shared hero block
+   (authored in sibling labs that all set border-box) does exactly that:
+   `.cl-hero-why { width: 100%; padding: .85rem 1.05rem; border: 1px }` measured
+   384px inside a 348px column at a 380px viewport, taking the document's scroll
+   width to 400 and giving the page a permanent horizontal scrollbar on a phone.
+   Scoped to #app so it cannot reach into the self-contained shared top bar,
+   matching how the element defaults below are scoped. */
+#app,
+#app *,
+#app *::before,
+#app *::after {
+  box-sizing: border-box;
 }
 
 #app {
@@ -158,7 +185,8 @@ body {
 .btn {
   background-color: var(--surface-2);
   color: var(--text);
-  border: 1px solid var(--border);
+  /* Component boundary, not a surface divider — see --ctl-border above. */
+  border: 1px solid var(--ctl-border);
   border-radius: 8px;
   padding: 0.5rem 0.9rem;
   min-height: 44px;
@@ -166,9 +194,16 @@ body {
 }
 .btn:hover { border-color: var(--accent-text); }
 .btn:disabled { cursor: not-allowed; color: var(--text-dim); }
+/* The filled button's boundary is its fill against the panel, and in the dark
+   theme `--accent` on `--surface` measured 2.58:1 — under the 3:1 non-text
+   floor, even though the white label on it is a comfortable 6.70:1. (In light
+   the same fill is 6.70:1 against white and needs no help.) Borrowing the
+   lighter `--accent-text` for the boundary fixes the dark case at 8.64:1
+   against the panel and 3.34:1 against the button's own fill, without retoning
+   the brand hue that `.stage-num` and the hero card also use. */
 .btn-primary {
   background-color: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   color: #ffffff;
   font-weight: 600;
 }
@@ -303,7 +338,8 @@ mark.byte-changed, .byteseg-bytes mark {
   background-color: var(--surface-2);
 }
 .side-card .ctl { display: flex; }
-.side-card input, .side-card select { width: 100%; min-width: 0; box-sizing: border-box; }
+/* box-sizing now comes from the #app rule at the top of this file. */
+.side-card input, .side-card select { width: 100%; min-width: 0; }
 .preset-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.6rem 0; }
 .breakit-results { margin-top: 1rem; }
 .compare-kv { max-width: 40rem; }
@@ -316,7 +352,10 @@ mark.byte-changed, .byteseg-bytes mark {
   border-radius: 8px;
   padding: 0.5rem 0.8rem;
   font-weight: 600;
-  border: 1.5px solid var(--border);
+  /* `.chip-ok` and `.chip-alarm` override this with their own tone; only the
+     neutral resting chip keeps it, and at `--border` it measured 1.54:1 dark /
+     1.60:1 light against the panel. */
+  border: 1.5px solid var(--ctl-border);
   margin: 0;
 }
 .chip-icon { font-weight: 700; }
