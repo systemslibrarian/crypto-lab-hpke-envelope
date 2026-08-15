@@ -31,7 +31,7 @@
  * what that left unmeasured.
  */
 import { test } from '@playwright/test';
-import { NARROW, boot, driveAllStates, reportCollected } from './gate';
+import { NARROW, boot, driveAllStates, expectBaselineNotStale, reportCollected } from './gate';
 
 test.beforeEach(async ({ page }) => {
   page.setDefaultTimeout(20_000);
@@ -52,6 +52,7 @@ for (const theme of ['dark', 'light'] as const) {
     await page.setViewportSize({ width: 1280, height: 900 });
     await boot(page, theme);
     await driveAllStates(page, `${theme} 1280`);
+    expectBaselineNotStale();
   });
 
   test(`WCAG A/AA — ${theme}, ${NARROW.width}px`, async ({ page }) => {
@@ -59,5 +60,6 @@ for (const theme of ['dark', 'light'] as const) {
     await page.setViewportSize(NARROW);
     await boot(page, theme);
     await driveAllStates(page, `${theme} ${NARROW.width}`);
+    expectBaselineNotStale();
   });
 }
