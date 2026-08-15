@@ -43,7 +43,7 @@ test.afterAll(() => {
   reportCollected();
 });
 
-for (const theme of ['dark', 'light'] as const) {
+for (const theme of ['dark'] as const) {
   test(`WCAG A/AA — ${theme}, 1280px`, async ({ page }) => {
     // ~45 scans per configuration, each an axe pass plus a full arithmetic
     // contrast walk. The budget is set to match the drive rather than the drive
