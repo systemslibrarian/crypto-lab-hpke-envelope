@@ -4,8 +4,8 @@
  * suite_id, label, length prefix) is the domain separation this lab teaches,
  * so it is spelled out here rather than hidden in a library.
  */
-import { extract, expand } from '@noble/hashes/hkdf';
-import { sha256 } from '@noble/hashes/sha2';
+import { extract, expand } from '@noble/hashes/hkdf.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { concatBytes, i2osp, utf8 } from './bytes';
 
 const VERSION_LABEL = utf8('HPKE-v1');
