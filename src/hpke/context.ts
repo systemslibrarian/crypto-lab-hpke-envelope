@@ -39,6 +39,7 @@ export class HpkeContext {
   readonly exporterSecret: Uint8Array;
   private readonly suiteId: Uint8Array;
   seq = 0n;
+  private operationTail: Promise<void> = Promise.resolve();
 
   constructor(role: 'sender' | 'recipient', aeadId: AeadId, schedule: ScheduleIntermediates) {
     this.role = role;
@@ -60,14 +61,25 @@ export class HpkeContext {
     this.seq += 1n;
   }
 
+  /** Serialize stateful operations in invocation order, including after failure.
+   * Read seq inside the queued operation and advance it only on success.
+   */
+  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    const result = this.operationTail.then(operation);
+    this.operationTail = result.then(() => undefined, () => undefined);
+    return result;
+  }
+
   /** ContextS.Seal(aad, pt) — encrypt at the current seq, then advance it. */
   async seal(aad: Uint8Array, plaintext: Uint8Array): Promise<SealRecord> {
-    const seq = this.seq;
-    const seqBytes = i2osp(seq, NN);
-    const nonce = this.computeNonce(seq);
-    const ct = await aeadSeal(this.aeadId, this.key, nonce, aad, plaintext);
-    this.incrementSeq();
-    return { seq, seqBytes, nonce, ct };
+    return this.enqueue(async () => {
+      const seq = this.seq;
+      const seqBytes = i2osp(seq, NN);
+      const nonce = this.computeNonce(seq);
+      const ct = await aeadSeal(this.aeadId, this.key, nonce, aad, plaintext);
+      this.incrementSeq();
+      return { seq, seqBytes, nonce, ct };
+    });
   }
 
   /**
@@ -76,11 +88,13 @@ export class HpkeContext {
    * only after a successful open, per §5.2.
    */
   async open(aad: Uint8Array, ct: Uint8Array): Promise<{ pt: Uint8Array; seq: bigint; nonce: Uint8Array }> {
-    const seq = this.seq;
-    const nonce = this.computeNonce(seq);
-    const pt = await aeadOpen(this.aeadId, this.key, nonce, aad, ct);
-    this.incrementSeq();
-    return { pt, seq, nonce };
+    return this.enqueue(async () => {
+      const seq = this.seq;
+      const nonce = this.computeNonce(seq);
+      const pt = await aeadOpen(this.aeadId, this.key, nonce, aad, ct);
+      this.incrementSeq();
+      return { pt, seq, nonce };
+    });
   }
 
   /** Context.Export(exporter_context, L) = LabeledExpand(exporter_secret, "sec", exporter_context, L) (§5.3). */
