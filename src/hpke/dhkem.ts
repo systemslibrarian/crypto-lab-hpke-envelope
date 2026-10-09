@@ -7,7 +7,7 @@
  * eae_prk, and the ExtractAndExpand that turns raw DH output into the KEM
  * shared secret — is hand-rolled here with every intermediate exposed.
  */
-import { x25519 } from '@noble/curves/ed25519';
+import { x25519 } from '@noble/curves/ed25519.js';
 import { concatBytes, isAllZero, randomBytes } from './bytes';
 import { KEM_SUITE_ID, NSECRET, NPK, NSK } from './consts';
 import { labeledExtract, labeledExpand } from './kdf';

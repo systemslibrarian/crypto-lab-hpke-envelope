@@ -6,7 +6,7 @@
  * WebCrypto (the browser's native, constant-time implementation) and
  * ChaCha20-Poly1305 on @noble/ciphers (audited; WebCrypto has no ChaCha).
  */
-import { chacha20poly1305 } from '@noble/ciphers/chacha';
+import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { AEAD_AES_128_GCM, AEAD_CHACHA20_POLY1305, AEAD_NK, type AeadId, NN, NT } from './consts';
 
 /**
