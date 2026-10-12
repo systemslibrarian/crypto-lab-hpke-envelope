@@ -47,7 +47,7 @@ Seal real messages under any mode and AEAD, expand every stage's intermediates, 
 
 ## Real-World Usage
 
-TLS Encrypted Client Hello (draft-ietf-tls-esni), Oblivious HTTP (RFC 9458) and Oblivious DoH, MLS (RFC 9420) welcome messages, Apple iCloud Private Relay / key recovery, and Go 1.26's `crypto/hpke`. Post-quantum: draft-ietf-hpke-pq registers ML-KEM and hybrid X25519+ML-KEM-768 KEM code points.
+TLS Encrypted Client Hello ([RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html), Standards Track, March 2026), with DNS Service Binding bootstrap in [RFC 9848](https://www.rfc-editor.org/info/rfc9848/), Oblivious HTTP (RFC 9458) and Oblivious DoH, MLS (RFC 9420) welcome messages, Apple iCloud Private Relay / key recovery, and Go 1.26's `crypto/hpke`. This lab implements RFC 9180 HPKE, not the full ECH or DNS bootstrap protocol; see [Blind Hello](https://systemslibrarian.github.io/crypto-lab-blind-hello/) for the ECH lesson. Post-quantum: draft-ietf-hpke-pq registers ML-KEM and hybrid X25519+ML-KEM-768 KEM code points.
 
 ## How to Run Locally
 
