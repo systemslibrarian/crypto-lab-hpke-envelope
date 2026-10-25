@@ -3,6 +3,7 @@ import { renderBreakIt } from './ui/breakit';
 import { renderModes } from './ui/modes';
 import { renderNoncePanel } from './ui/nonce';
 import { renderPipeline } from './ui/pipeline';
+import { renderSigncryption } from './ui/signcryption';
 import { renderIntro, renderNonGoals, renderPqPanel, renderScopeStrip } from './ui/statics';
 import { LabStore } from './ui/state';
 
@@ -19,6 +20,7 @@ main.append(
   renderModes(store),
   renderNoncePanel(store),
   renderBreakIt(store),
+  renderSigncryption(),
   renderNonGoals(),
   renderPqPanel(),
   renderScopeStrip(),

@@ -7,6 +7,7 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:mutations": "node scripts/signcryption-mutations.mjs",
     "test:watch": "vitest",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",

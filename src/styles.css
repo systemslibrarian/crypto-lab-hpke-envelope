@@ -372,6 +372,35 @@ mark.byte-changed, .byteseg-bytes mark {
 }
 .breakit-explain { max-width: 75ch; }
 
+/* ---- S01 sender-evidence / compromise comparison ---- */
+.s01-controls .ctl { flex: 1 1 18rem; }
+.s01-controls input { width: 100%; min-width: 0; }
+.s01-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.8rem;
+  margin: 0.9rem 0;
+}
+.s01-result-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  background-color: var(--surface-2);
+}
+.s01-result-card .chip { display: block; margin: 0.45rem 0; }
+.s01-result-card .note { margin-bottom: 0; }
+.s01-trace { margin-top: 0.8rem; }
+.s01-trace .hexrow { margin: 0.7rem 0; }
+.s01-matrix-heading { margin-top: 1.2rem !important; }
+.s01-matrix { border-collapse: collapse; width: 100%; min-width: 46rem; font-size: 0.86rem; }
+.s01-matrix th, .s01-matrix td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+.s01-matrix thead th { background-color: var(--surface-2); }
+
 /* ---- Non-goals / scope ---- */
 .nongoal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 0.9rem; margin-top: 0.8rem; }
 .nongoal-card {
