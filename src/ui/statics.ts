@@ -133,7 +133,7 @@ export function renderScopeStrip(): HTMLElement {
       el('li', {}, 'Not an AEAD lab — GCM/Poly1305 internals live in ', extLink(LABS.aesModes, 'aes-modes'), ' and ', extLink(LABS.aegisGate, 'aegis-gate'), '.'),
       el('li', {}, 'Not an ECH or OHTTP lab — those protocols carry HPKE envelopes; ', extLink(LABS.blindHello, 'blind-hello'), ' and ', extLink(LABS.blindRelay, 'blind-relay'), ' are the separate labs.'),
       el('li', {},
-        'No key-compromise-impersonation build-out. Named exactly, per RFC 9180 §9.1.1: the DHKEM variants in the RFC are vulnerable to KCI — sender authentication cannot be expected to hold in Auth mode if the recipient’s skR is compromised, nor in AuthPSK mode if the PSK and skR are both compromised. The suggested mitigation is a signature over (enc, ct).'),
+        'No claim that Auth is transferable signature evidence. The executable comparison above demonstrates RFC 9180 §9.1.1 KCI for Auth and a bounded identity-bound StE alternative; it does not turn HPKE Auth into a public-verification mechanism or a production messaging protocol.'),
     ),
   );
   return root;

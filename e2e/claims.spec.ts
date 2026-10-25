@@ -15,6 +15,7 @@
  * The a11y spec is a separate gate; nothing here weakens it.
  */
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { createPublicKey, verify } from 'node:crypto';
 
 // Reduced motion collapses the pipeline's stage-highlight delays, so seals
 // resolve promptly and deterministically. It changes no computed value.
@@ -614,7 +615,114 @@ test('replay: valid crypto, alarming system — HPKE has no replay protection (�
 });
 
 // ---------------------------------------------------------------------------
-// 7. README promises a reader can confirm on the page.
+// 7. S01 — recipient-key KCI versus identity-bound Sign-then-Encrypt.
+// ---------------------------------------------------------------------------
+
+async function runS01(page: Page): Promise<void> {
+  await page.locator('#s01-run').click();
+  await expect(page.locator('#s01-status')).toContainText('Nine cases completed', {
+    timeout: 20_000,
+  });
+  await expect(page.locator('#s01-run')).toBeEnabled();
+}
+
+function decodeS01Tuple(hex: string): string[] {
+  const bytes = Buffer.from(hex, 'hex');
+  const domain = Buffer.from('crypto-lab-s01-ste-signed-v1\0', 'utf8');
+  expect(bytes.subarray(0, domain.length).equals(domain)).toBe(true);
+  let offset = domain.length;
+  const count = bytes.readUInt16BE(offset);
+  offset += 2;
+  expect(count).toBe(4);
+  const fields: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const length = bytes.readUInt32BE(offset);
+    offset += 4;
+    fields.push(new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(offset, offset + length)));
+    offset += length;
+  }
+  expect(offset).toBe(bytes.length);
+  return fields;
+}
+
+test('S01 executes the compromise matrix and keeps rejection distinct from compromise alarms', async ({ page }) => {
+  await page.goto('.');
+  await runS01(page);
+
+  await expect(page.locator('#s01-honest')).toContainText('both accepted');
+  await expect(page.locator('#s01-honest')).toHaveClass(/chip-ok/);
+  await expect(page.locator('#s01-outsider')).toContainText('rejected before plaintext release');
+  await expect(page.locator('#s01-outsider')).toHaveClass(/chip-ok/);
+  await expect(page.locator('#s01-auth-kci')).toContainText('forgery accepted');
+  await expect(page.locator('#s01-auth-kci')).toHaveClass(/chip-alarm/);
+  await expect(page.locator('#s01-ste-recipient')).toContainText('changed message rejected');
+  await expect(page.locator('#s01-ste-recipient')).toHaveClass(/chip-ok/);
+  await expect(page.locator('#s01-forward')).toContainText('wrong signed recipient');
+  await expect(page.locator('#s01-sender')).toContainText('new forgery accepted');
+  await expect(page.locator('#s01-sender')).toHaveClass(/chip-alarm/);
+  await expect(page.locator('#s01-both')).toContainText('recorded plaintext exposed');
+  await expect(page.locator('#s01-both')).toHaveClass(/chip-alarm/);
+  await expect(page.locator('#s01-evidence')).toContainText('pinned Sara key');
+  await expect(page.locator('#s01-replay')).toContainText('accepted twice');
+  await expect(page.locator('#s01-replay')).toHaveClass(/chip-alarm/);
+
+  await expect(page.locator('.s01-result-card').filter({ has: page.locator('#s01-auth-kci') })).toContainText(
+    'used Ravi’s skR and Sara’s public pkS, never Sara’s skS',
+  );
+  await expect(page.locator('.s01-result-card').filter({ has: page.locator('#s01-ste-recipient') })).toContainText(
+    'not returned as application plaintext',
+  );
+  await expect(page.locator('.s01-result-card').filter({ has: page.locator('#s01-replay') })).toContainText(
+    'No message identifier or replay cache',
+  );
+});
+
+test('S01 evidence independently verifies with Node Ed25519 and decodes every signed binding', async ({ page }) => {
+  await page.goto('.');
+  const context = 'registrar.example/course-17/grade-release/v1';
+  const message = 'Result: distinction — independently checked';
+  await page.locator('#s01-context').fill(context);
+  await page.locator('#s01-message').fill(message);
+  await runS01(page);
+
+  const signed = (await page.locator('#s01-evidence-signed').textContent())!.trim();
+  const signature = (await page.locator('#s01-evidence-signature').textContent())!.trim();
+  const publicKey = (await page.locator('#s01-evidence-key').textContent())!.trim();
+  expect(signed).toMatch(/^[0-9a-f]+$/);
+  expect(signature).toHaveLength(128);
+  expect(publicKey).toHaveLength(64);
+
+  // Node/OpenSSL is independent of the browser's @noble verification path.
+  const spki = Buffer.concat([
+    Buffer.from('302a300506032b6570032100', 'hex'),
+    Buffer.from(publicKey, 'hex'),
+  ]);
+  expect(
+    verify(
+      null,
+      Buffer.from(signed, 'hex'),
+      createPublicKey({ key: spki, format: 'der', type: 'spki' }),
+      Buffer.from(signature, 'hex'),
+    ),
+  ).toBe(true);
+  expect(decodeS01Tuple(signed)).toEqual(['Sara', 'Ravi', context, message]);
+});
+
+test('editing an S01 input retires every prior verdict and public trace', async ({ page }) => {
+  await page.goto('.');
+  await runS01(page);
+  await page.locator('#s01-message').fill('new message, old verdicts forbidden');
+  await expect(page.locator('#s01-status')).toContainText('prior cryptographic results retired');
+  await expect(page.locator('.s01-result-card .chip')).toHaveCount(9);
+  for (const chip of await page.locator('.s01-result-card .chip').all()) {
+    await expect(chip).toContainText('result retired');
+  }
+  await expect(page.locator('#s01-evidence-signed')).toHaveText('(run the cases)');
+  await expect(page.locator('#s01-kci-enc')).toHaveText('(run the cases)');
+});
+
+// ---------------------------------------------------------------------------
+// 8. README promises a reader can confirm on the page.
 // ---------------------------------------------------------------------------
 
 test('every §9.7 non-goal is stated, and each stage links to the lab that owns it', async ({ page }) => {
@@ -637,7 +745,7 @@ test('every §9.7 non-goal is stated, and each stage links to the lab that owns 
   // Post-quantum panel: named, not built.
   await expect(page.locator('#pq-h')).toContainText('named, not built');
   await expect(page.locator('#pq-h ~ p').first()).toContainText('ML-KEM-768 + X25519 as a hybrid HPKE KEM');
-  await expect(page.locator('#scope-h ~ ul')).toContainText('No key-compromise-impersonation build-out');
+  await expect(page.locator('#scope-h ~ ul')).toContainText('No claim that Auth is transferable signature evidence');
 });
 
 test('the page loads without a runtime error and renders every panel', async ({ page }) => {
@@ -647,9 +755,10 @@ test('the page loads without a runtime error and renders every panel', async ({ 
     if (m.type() === 'error') errors.push(m.text());
   });
   await page.goto('.');
-  await expect(page.locator('main.lab-main > section.panel')).toHaveCount(8);
+  await expect(page.locator('main.lab-main > section.panel')).toHaveCount(9);
   await expect(page.locator('h1')).toHaveText('HPKE Envelope');
   await seal(page, 0);
   await runDelivery(page);
+  await runS01(page);
   expect(errors).toEqual([]);
 });

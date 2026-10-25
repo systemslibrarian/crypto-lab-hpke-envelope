@@ -38,7 +38,7 @@ export const NARROW = { width: 380, height: 800 };
 /**
  * Soft-gate collection mode — strict unless `A11Y_COLLECT` is set.
  *
- * Fixing a page one thrown assertion at a time means one full four-config run
+ * Fixing a page one thrown assertion at a time means one full two-viewport run
  * per defect. `A11Y_COLLECT=1 npx playwright test` instead records every failed
  * assertion, finishes the drive, and dumps the lot, so a page can be fixed in
  * one pass.
@@ -160,7 +160,7 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
 
   // Every panel is constructed in TypeScript and appended to #app.
-  for (const id of ['pipeline-h', 'modes-h', 'nonce-h', 'breakit-h', 'nongoals-h']) {
+  for (const id of ['pipeline-h', 'modes-h', 'nonce-h', 'breakit-h', 'signcryption-h', 'nongoals-h']) {
     await expect(page.locator(`#${id}`)).toBeVisible();
   }
   await expect(page.locator('#stage-kem')).toBeVisible();
@@ -553,6 +553,20 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await page.click('#breakit-run');
   await expect(page.locator('#verdict-chip')).toContainText('BINDING HELD');
   await at('break-it: hand-edited receiver info and sender mode');
+
+  // ── S01 sender-evidence comparison: neutral, computed, disclosure, stale ─
+  await at('S01 compromise comparison before run');
+  await page.click('#s01-run');
+  await expect(page.locator('#s01-status')).toContainText('Nine cases completed');
+  await expect(page.locator('#s01-auth-kci')).toContainText('forgery accepted');
+  await expect(page.locator('#s01-ste-recipient')).toContainText('changed message rejected');
+  await at('S01 compromise cases computed');
+  await openDisclosure(page, '.s01-trace details > summary');
+  await expect(page.locator('#s01-evidence-signature')).toHaveText(/^[0-9a-f]{128}$/);
+  await at('S01 public evidence disclosure open');
+  await page.fill('#s01-message', 'changed input retires the old verdict');
+  await expect(page.locator('#s01-status')).toContainText('prior cryptographic results retired');
+  await at('S01 stale verdicts retired');
 
   // ── The skip link, on screen only while focused ─────────────────────────
   await page.locator('.cl-skip-link').focus();

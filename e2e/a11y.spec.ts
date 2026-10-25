@@ -1,11 +1,11 @@
 /**
  * The WCAG A/AA gate for the HPKE Envelope lab.
  *
- * Four configurations — {dark, light} x {1280, 380} — each driven through every
- * state the lab can render, with a full scan after every single step. The
- * matrix is not padding: `html[data-theme='light']` re-declares every ink and
- * every surface, and 380px is where the break-it two-column grid and the chip
- * row collapse and the nonce table starts panning inside its `.tablewrap`.
+ * Two configurations — the shipped dark theme at 1280px and 380px — each
+ * driven through every state the lab can render, with a full scan after every
+ * single step. The page now pins dark before first paint; 380px is where the
+ * break-it two-column grid and the chip row collapse and the nonce table starts
+ * panning inside its `.tablewrap`.
  *
  * What the replaced spec did instead, and why none of it could be kept:
  *

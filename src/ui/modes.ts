@@ -36,7 +36,7 @@ const MODE_FACTS: Record<Mode, ModeFacts> = {
     proves:
       'Sender authentication via the sender’s static key: generally expected to hold if skS is not compromised at the time of message reception (§9.1).',
     caveat:
-      'Key-compromise impersonation (§9.1.1): if the RECIPIENT’s skR is compromised, sender authentication cannot be expected to hold — an attacker with skR can forge messages “from” the sender. This lab names that limit; it does not build the attack.',
+      'Key-compromise impersonation (§9.1.1): if the RECIPIENT’s skR is compromised, sender authentication cannot be expected to hold — an attacker with skR can forge messages “from” the sender. The executable comparison below builds that attack.',
   },
   [MODE_AUTH_PSK]: {
     adds: 'Both additions at once: mode byte 0x03, the PSK in secret, psk_id in the context, and the second DH in the KEM.',
