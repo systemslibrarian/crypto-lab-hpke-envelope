@@ -1,6 +1,8 @@
 /**
  * Labeled HKDF-SHA256 (RFC 9180 §4) — hand-rolled label framing over
- * @noble/hashes' audited HKDF Extract/Expand. The framing (version tag,
+ * @noble/hashes' HKDF Extract/Expand — a library whose one independent audit
+ * is "at version 1.0.0, in Jan 2022, independently, by [Cure53]", older than
+ * the ^2.4.0 pinned here. The framing (version tag,
  * suite_id, label, length prefix) is the domain separation this lab teaches,
  * so it is spelled out here rather than hidden in a library.
  */

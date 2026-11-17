@@ -23,7 +23,7 @@ export function renderIntro(): HTMLElement {
     el('p', { class: 'honesty' },
       el('strong', {}, 'Honest scope: '),
       'this is a teaching demo, not production crypto. The X25519, HKDF-SHA256, AES-128-GCM, and ChaCha20-Poly1305 underneath are real ',
-      '(audited @noble libraries and the browser’s WebCrypto), and the HPKE key schedule is implemented here by hand and checked against ',
+      '(@noble libraries and the browser’s WebCrypto), and the HPKE key schedule is implemented here by hand and checked against ',
       'the RFC 9180 Appendix A test vectors. What it does NOT prove: side-channel resistance, secure key storage, or the security of any ',
       'protocol you might build on top. All key material is generated per session, in this tab’s memory only.'),
     el('details', { class: 'expert' },

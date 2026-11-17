@@ -4,7 +4,9 @@
  * The AEAD internals are deliberately NOT rebuilt here — that is
  * crypto-lab-aes-modes / crypto-lab-aegis-gate territory. AES-128-GCM runs on
  * WebCrypto (the browser's native, constant-time implementation) and
- * ChaCha20-Poly1305 on @noble/ciphers (audited; WebCrypto has no ChaCha).
+ * ChaCha20-Poly1305 on @noble/ciphers, whose latest audit is "at version 1.0.0,
+ * in Sep 2024, independently, by [cure53]" — older than the ^2.4.0 pinned here
+ * (WebCrypto has no ChaCha). RFC 9180 Appendix A.2 is what this lab checks it against.
  */
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { AEAD_AES_128_GCM, AEAD_CHACHA20_POLY1305, AEAD_NK, type AeadId, NN, NT } from './consts';
