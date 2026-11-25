@@ -70,9 +70,14 @@ export function renderNoncePanel(store: LabStore): HTMLElement {
     table.append(tbody);
     tableWrap.append(table);
 
-    status.textContent = store.transcript.length === 0
-      ? 'No messages sealed in this context yet. (Changing any pipeline input re-keys the context and resets seq — which is why the table clears.)'
-      : `${store.transcript.length} message${store.transcript.length === 1 ? '' : 's'} sealed; next Seal will use seq ${store.setup.context.seq}. Distinct seq ⇒ distinct nonce under the same key.`;
+    const nextSeq = store.setup.context.seq;
+    if (store.transcript.length) {
+      status.textContent = `${store.transcript.length} message${store.transcript.length === 1 ? '' : 's'} sealed; next Seal will use seq ${nextSeq}. Rows show seals for the current plaintext and AAD.`;
+    } else {
+      status.textContent = nextSeq === 0n
+        ? 'No messages sealed in this context yet.'
+        : `No seals shown for the current plaintext and AAD. This context continues at seq ${nextSeq}.`;
+    }
   };
 
   store.subscribe(refresh);

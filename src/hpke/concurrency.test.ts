@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import * as aead from './aead';
+import { LabStore } from '../ui/state';
 import { bytesToHex, utf8 } from './bytes';
 import { AEAD_AES_128_GCM, AEAD_CHACHA20_POLY1305, AEAD_NAMES, type AeadId, MODE_BASE, NN } from './consts';
 import { MessageLimitError } from './context';
@@ -94,3 +95,16 @@ for (const aeadId of [AEAD_AES_128_GCM, AEAD_CHACHA20_POLY1305] as const) {
     });
   });
 }
+
+test('a seal that finishes after a payload edit stays out of the new transcript', async () => {
+  const store = new LabStore();
+  const pending = store.seal();
+  store.editPayload('message', 'new draft');
+  await pending;
+  expect(store.transcript).toEqual([]);
+  expect(store.setup.context.seq).toBe(1n);
+
+  await store.seal();
+  expect(store.transcript).toHaveLength(1);
+  expect(store.transcript[0]).toMatchObject({ plaintext: 'new draft', seq: 1n });
+});

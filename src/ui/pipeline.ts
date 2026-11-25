@@ -90,7 +90,7 @@ export function renderPipeline(store: LabStore): HTMLElement {
 
   const textInput = (id: string, label: string, value: string, onChange: (v: string) => void) => {
     const input = el('input', { type: 'text', id, value }) as HTMLInputElement;
-    input.addEventListener('change', () => onChange(input.value));
+    input.addEventListener('input', () => onChange(input.value));
     return el('span', { class: 'ctl' }, el('label', { for: id, text: label }), input);
   };
 
@@ -98,8 +98,8 @@ export function renderPipeline(store: LabStore): HTMLElement {
     modeFieldset,
     el('span', { class: 'ctl' }, el('label', { for: 'aead-select', text: 'AEAD' }), aeadSelect),
     textInput('info-input', 'info (application context)', store.info, (v) => { store.info = v; store.recompute(); }),
-    textInput('aad-input', 'AAD (bound, not encrypted)', store.aad, (v) => { store.aad = v; store.recompute(); }),
-    textInput('msg-input', 'plaintext message', store.message, (v) => { store.message = v; store.recompute(); }),
+    textInput('aad-input', 'AAD (bound, not encrypted)', store.aad, (v) => store.editPayload('aad', v)),
+    textInput('msg-input', 'plaintext message', store.message, (v) => store.editPayload('message', v)),
   );
 
   const pskCtl = el('div', { class: 'controls psk-controls', id: 'psk-controls' });
@@ -207,25 +207,24 @@ export function renderPipeline(store: LabStore): HTMLElement {
 
   const sealBtn = el('button', { type: 'button', class: 'btn btn-primary', id: 'seal-btn', text: 'Seal the message' });
   const sealStatus = el('p', { class: 'seal-status', role: 'status', 'aria-live': 'polite', id: 'seal-status' });
-  sealBtn.addEventListener('click', () => {
-    void (async () => {
-      sealBtn.disabled = true;
-      const stages = ['stage-kem', 'stage-kdf', 'stage-aead', 'stage-output'];
-      const step = prefersReducedMotion() ? 0 : 260;
+  sealBtn.addEventListener('click', async () => {
+    sealBtn.disabled = true;
+    const transcript = store.transcript;
+    const stages = ['stage-kem', 'stage-kdf', 'stage-aead', 'stage-output'];
+    const step = prefersReducedMotion() ? 0 : 260;
+    try {
       for (const id of stages) {
+        if (store.transcript !== transcript) return;
         document.getElementById(id)?.classList.add('stage-active');
-        if (step) await new Promise((r) => setTimeout(r, step));
+        if (step) await new Promise((resolve) => setTimeout(resolve, step));
       }
-      const entry = await store.seal();
-      // The AEAD sealed the UTF-8 encoding, so the arithmetic printed here has
-      // to count UTF-8 bytes. `entry.plaintext.length` counts UTF-16 code
-      // units, which made the sum wrong for any non-ASCII message ("café ☕"
-      // printed "ct is 25 bytes (plaintext 6 + 16-byte tag)").
-      const ptBytes = utf8(entry.plaintext).length;
-      sealStatus.textContent = `Sealed message #${entry.seq} — ct is ${entry.ct.length} bytes (plaintext ${ptBytes} + 16-byte tag; the length is not hidden). Nonce used: ${bytesToHex(entry.nonce)}.`;
-      setTimeout(() => stages.forEach((id) => document.getElementById(id)?.classList.remove('stage-active')), step ? 900 : 0);
+      if (store.transcript === transcript) await store.seal();
+    } catch {
+      if (store.transcript === transcript) sealStatus.textContent = 'Sealing failed. Please try again.';
+    } finally {
+      stages.forEach((id) => document.getElementById(id)?.classList.remove('stage-active'));
       sealBtn.disabled = false;
-    })();
+    }
   });
 
   root.append(controls, pskCtl, keyBtns, diagram, el('div', { class: 'seal-row' }, sealBtn, sealStatus));
@@ -295,8 +294,11 @@ export function renderPipeline(store: LabStore): HTMLElement {
     kv(outKv, 'enc (KEM ciphertext, 32 B)', shortHex(setup.enc, 12));
     const last = store.transcript[store.transcript.length - 1];
     if (last) {
+      const ptBytes = utf8(last.plaintext).length;
+      sealStatus.textContent = `Sealed message #${last.seq} — ct is ${last.ct.length} bytes (plaintext ${ptBytes} + 16-byte tag; the length is not hidden). Nonce used: ${bytesToHex(last.nonce)}.`;
       kv(outKv, `ct #${last.seq} (${last.ct.length} B)`, shortHex(last.ct, 12));
     } else {
+      sealStatus.textContent = '';
       outKv.append(el('dt', { text: 'ct' }), el('dd', { text: 'press “Seal the message”' }));
     }
     outputNote.textContent =

@@ -762,3 +762,39 @@ test('the page loads without a runtime error and renders every panel', async ({ 
   await runS01(page);
   expect(errors).toEqual([]);
 });
+
+test('editing the message or AAD retires the seal and preserves the next sequence', async ({ page }) => {
+  await page.goto('.');
+  await seal(page, 0);
+  const draft = page.locator('#msg-input');
+  const status = page.locator('#seal-status');
+  const output = page.locator('#stage-output');
+  const rows = page.locator('.nonce-table tbody tr');
+  await draft.fill('café');
+  await expect(draft).toBeFocused();
+  await expect(status).toBeEmpty();
+  await expect(output).toContainText('press “Seal the message”');
+  await expect(rows).toHaveCount(1);
+  const fresh = await seal(page, 1);
+  expect([fresh.ptBytes, fresh.ctBytes]).toEqual([5, 21]);
+  await page.locator('#aad-input').fill('new header');
+  await expect(status).toBeEmpty();
+  await expect(rows).toHaveCount(1);
+  const withHeader = await seal(page, 2);
+  expect(withHeader.nonce).not.toBe(fresh.nonce);
+  await draft.fill('');
+  const empty = await seal(page, 3);
+  expect([empty.ptBytes, empty.ctBytes]).toEqual([0, 16]);
+});
+
+test('an edit during the stage animation cancels the pending seal', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('.');
+  await page.locator('#seal-btn').click();
+  await page.locator('#msg-input').fill('replacement');
+  await expect(page.locator('#seal-btn')).toBeEnabled();
+  await expect(page.locator('#seal-status')).toBeEmpty();
+  await expect(page.locator('.nonce-table tbody tr')).toHaveCount(1);
+  const first = await seal(page, 0);
+  expect(first.ptBytes).toBe(11);
+});

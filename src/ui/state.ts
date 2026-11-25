@@ -75,12 +75,20 @@ export class LabStore {
     this.notify();
   }
 
-  async seal(): Promise<TranscriptEntry> {
-    const rec = await this.setup.context.seal(utf8(this.aad), utf8(this.message));
-    const entry: TranscriptEntry = { ...rec, plaintext: this.message, aad: this.aad };
-    this.transcript.push(entry);
+  editPayload(field: 'message' | 'aad', value: string): void {
+    if (this[field] === value) return;
+    this[field] = value;
+    this.transcript = [];
     this.notify();
-    return entry;
+  }
+
+  async seal(): Promise<void> {
+    const { transcript, message, aad, setup } = this;
+    const rec = await setup.context.seal(utf8(aad), utf8(message));
+    if (this.setup !== setup) return;
+    // An edit retires this view even if the student types the old text again.
+    if (this.transcript === transcript) transcript.push({ ...rec, plaintext: message, aad });
+    this.notify();
   }
 
   newRecipientKey(): void {
