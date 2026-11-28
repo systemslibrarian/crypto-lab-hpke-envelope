@@ -66,7 +66,7 @@ TLS Encrypted Client Hello ([RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.ht
 ```bash
 npm install
 npm run dev        # Vite dev server
-npm test           # 258 Vitest tests incl. RFC 9180 Appendix A KATs
+npm test           # Vitest suite including RFC 9180 Appendix A KATs
 npm run test:mutations # passing baseline + 19 S01 security mutations caught
 npm run build      # typecheck + production build
 npm run test:a11y  # Playwright: functional claims spec + axe-core WCAG 2.1 A/AA gate
@@ -86,7 +86,7 @@ npm run test:a11y  # Playwright: functional claims spec + axe-core WCAG 2.1 A/AA
 
 ## Build & Verify
 
-- **258 Vitest tests, all passing**, of which 173 are known-answer tests from the official RFC 9180 Appendix A vectors (`src/hpke/vectors/rfc9180.json`, trimmed from the CFRG `test-vectors.json`): A.1 and A.2 suites × all four modes — DeriveKeyPair, Encap/Decap, every KeySchedule intermediate, Seal/Open at `seq ∈ {0, 1, 2, 255, 256}`, and secret export.
+- The Vitest suite includes 173 known-answer tests from the official RFC 9180 Appendix A vectors (`src/hpke/vectors/rfc9180.json`, trimmed from the CFRG `test-vectors.json`): A.1 and A.2 suites × all four modes — DeriveKeyPair, Encap/Decap, every KeySchedule intermediate, Seal/Open at `seq ∈ {0, 1, 2, 255, 256}`, and secret export.
 - The remaining tests cover fresh-key round-trips (all modes × both AEADs), the context-binding matrix, concurrent Seal/Open ordering and failure recovery, fail-closed HPKE edge cases, and 19 S01 construction tests. Those S01 tests include RFC 8032 Test 1, strict rejection of an identity-point signature accepted by ZIP-215, canonical framing, unsupported-version rejection, each independent multi-user binding, recipient/sender compromise, forwarding, pinned-key evidence, application-plaintext quarantine and an executable RFC 9180 KCI forge.
 - **27 Playwright tests drive the built page in a real browser** (`e2e/claims.spec.ts` plus the accessibility drive) and assert what it claims. In addition to the existing pipeline, mode, nonce, tamper and replay checks, the S01 tests execute all compromise cases, independently decode the displayed signed tuple and verify its Ed25519 signature with Node/OpenSSL rather than the browser's Noble verifier, and require input changes to retire every prior result and trace.
 - **19 source mutations** run only after an unmodified focused-test baseline passes. They remove individual sender/recipient/context bindings (including the receiver's independently expected context), weaken strict Ed25519 and canonical framing, trust an evidence-supplied key, release rejected plaintext/evidence, change the KCI mode and weaken an input bound; every mutation must be caught and the exact source is restored after each case.
